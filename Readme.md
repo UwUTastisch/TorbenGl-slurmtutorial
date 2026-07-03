@@ -110,6 +110,18 @@ Reading `sinfo`: the `STATE` column tells you what's usable — `idle` (free),
 
 ### First Connection to the Slurm Cluster
 
+> **Before you start:** you can SSH into the login node with just a valid key
+> and university account — but that alone doesn't let you run jobs. If
+> `srun`/`sbatch` fail (e.g. with an association/account error) even though
+> `ssh slurm` works fine, you don't have a local Slurm account yet — **contact
+> the server admin** to get one set up.
+
+> **Note:** you *can* log in with just your username and password
+> (`ssh <your-uni-username>@sl-li.informatik.uni-rostock.de`), no key required
+> — but this is **not recommended**: passwords are weaker (phishable,
+> guessable, reusable across sites) and get prompted for on every connection.
+> Set up an SSH key as below and use that instead.
+
 1. **Create an SSH key** (skip if you already have one):
 
    ```bash
@@ -146,6 +158,46 @@ Reading `sinfo`: the `STATE` column tells you what's usable — `idle` (free),
    ```bash
    ssh slurm
    ```
+
+#### Windows (PowerShell, no Git Bash/WSL)
+
+Steps 1–5 above work as-is in **Git Bash** or **WSL**. If you'd rather use
+Windows' built-in OpenSSH client directly from **PowerShell**, here's the
+equivalent:
+
+1. **Create an SSH key:**
+
+   ```powershell
+   ssh-keygen -t ed25519 -C "<your-uni-username>@uni-rostock"
+   ```
+
+   Accept the default path (`C:\Users\<you>\.ssh\id_ed25519`).
+
+2. **Start the ssh-agent service and add your key** (run PowerShell **as
+   Administrator** once, just for the `Set-Service` line):
+
+   ```powershell
+   Set-Service ssh-agent -StartupType Automatic
+   Start-Service ssh-agent
+   ssh-add $env:USERPROFILE\.ssh\id_ed25519
+   ```
+
+3. **Copy the public key to the server.** Windows has no `ssh-copy-id`, so
+   append it by hand over SSH:
+
+   ```powershell
+   Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub | ssh <your-uni-username>@sl-li.informatik.uni-rostock.de "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+   ```
+
+4. **Add the same host block** to `C:\Users\<you>\.ssh\config` (create the
+   file if it doesn't exist yet) — the content is identical to step 4 above.
+
+5. **Connect:** `ssh slurm` works the same from PowerShell once the config
+   file is in place.
+
+> If `ssh-add` can't find the agent, double check the `ssh-agent` service is
+> running (`Get-Service ssh-agent`) — it needs to be `Running`, not just
+> `Stopped`.
 
 ### Project setup (uv + clone)
 
