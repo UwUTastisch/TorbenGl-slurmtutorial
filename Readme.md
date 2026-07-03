@@ -110,7 +110,7 @@ Reading `sinfo`: the `STATE` column tells you what's usable — `idle` (free),
 
 ### First Connection to the Slurm Cluster
 
-> **Before you start:** you can SSH into the login node with just a valid key
+> **Before you start:** you can SSH into the login node with a valid key
 > and university account — but that alone doesn't let you run jobs. If
 > `srun`/`sbatch` fail (e.g. with an association/account error) even though
 > `ssh slurm` works fine, you don't have a local Slurm account yet — **contact
