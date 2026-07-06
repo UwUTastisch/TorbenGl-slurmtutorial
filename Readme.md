@@ -138,7 +138,7 @@ Reading `sinfo`: the `STATE` column tells you what's usable — `idle` (free),
 3. **Copy the public key to the server:**
 
    ```bash
-   ssh-copy-id <your-uni-username>@sl-li.informatik.uni-rostock.de
+   ssh-copy-id <your-uni-email>@sl-li.informatik.uni-rostock.de
    ```
 
 4. **Add a host block** to `~/.ssh/config` so you can just type `ssh slurm`.
@@ -148,8 +148,8 @@ Reading `sinfo`: the `STATE` column tells you what's usable — `idle` (free),
    ```sshconfig
    Host slurm
        HostName sl-li.informatik.uni-rostock.de
-       User <your-uni-username>
-       ForwardAgent yes
+       User <your-uni-info-username>
+       ForwardAgent yes #gives your ssh agent to github (ensure that the key is present in github)
        # ProxyJump <gateway>   # uncomment only if you must hop through a gateway
    ```
 
