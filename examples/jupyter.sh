@@ -126,7 +126,9 @@ connect() {
 
   2. Then open:
 
-       http://localhost:8888/lab?token=${TOKEN}
+       https://localhost:8888/lab?token=${TOKEN}
+
+     (self-signed cert -- your browser will warn once; accept it to proceed.)
 
   3. When you're done:  ./examples/jupyter.sh ${NAME:+$NAME }--stop
 
@@ -197,4 +199,3 @@ while true; do
 done
 
 connect
-

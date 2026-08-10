@@ -79,6 +79,38 @@ echo "Reverse tunnel: ${LOGIN_HOST}:${LOGIN_PORT} -> $(hostname):${LOCAL_PORT}"
 # Generated up front so the wrapper never has to scrape it back out of the log.
 TOKEN=$(openssl rand -hex 24 2>/dev/null || python -c 'import secrets; print(secrets.token_hex(24))')
 
+# --- SSL/TLS certificate ----------------------------------------------------
+# Serve Jupyter over HTTPS with a self-signed cert. It's generated once and
+# reused by later jobs, so the browser only has to be told to trust it the
+# first time. Since Jupyter is always reached as https://localhost:8888 through
+# the SSH tunnel, the cert only needs to be valid for localhost / 127.0.0.1.
+CERTFILE="$SLURM_SUBMIT_DIR/logs/jupyter.crt"
+KEYFILE="$SLURM_SUBMIT_DIR/logs/jupyter.key"
+
+# A lock serialises generation so two jobs sharing this repo can't race and
+# clobber each other's key/cert pair.
+(
+  flock 9
+  need_cert=false
+  if [ ! -s "$CERTFILE" ] || [ ! -s "$KEYFILE" ]; then
+    need_cert=true
+  elif ! openssl x509 -checkend 86400 -noout -in "$CERTFILE" >/dev/null 2>&1; then
+    echo "TLS certificate expired; regenerating."
+    need_cert=true
+  fi
+
+  if $need_cert; then
+    echo "Generating self-signed TLS certificate in logs/ ..."
+    umask 077
+    openssl req -x509 -newkey rsa:2048 -nodes \
+      -keyout "$KEYFILE" -out "$CERTFILE" \
+      -days 365 -subj "/CN=localhost" \
+      -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+  else
+    echo "Reusing TLS certificate in logs/."
+  fi
+) 9>"$SLURM_SUBMIT_DIR/logs/.jupyter-cert.lock"
+
 # --- Publish connection details on the shared filesystem --------------------
 umask 077
 cat > "$CONNFILE" <<EOF
@@ -100,7 +132,7 @@ echo
 echo "From your laptop, run:"
 echo "    ssh -N -L 8888:localhost:${LOGIN_PORT} slurm"
 echo "Then open:"
-echo "    http://localhost:8888/lab?token=${TOKEN}"
+echo "    https://localhost:8888/lab?token=${TOKEN}"
 echo
 
 # --- Launch -----------------------------------------------------------------
@@ -110,6 +142,7 @@ jupyter lab \
   --ip=127.0.0.1 \
   --port="$LOCAL_PORT" \
   --port-retries=0 \
+  --certfile="$CERTFILE" \
+  --keyfile="$KEYFILE" \
   --ServerApp.root_dir="$NOTEBOOK_DIR" \
   --IdentityProvider.token="$TOKEN"
-
