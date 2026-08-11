@@ -122,7 +122,7 @@ connect() {
 
   1. On your laptop, in a new terminal, leave this running:
 
-       ssh -N -L 8888:localhost:${LOGIN_PORT} slurm
+       ssh -N -L 8888:${NODE}:${PORT} slurm
 
   2. Then open:
 
